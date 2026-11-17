@@ -278,11 +278,15 @@ export class BrowserService {
       const response = await this.request(
         `/sessions/${encodeURIComponent(id)}/downloads/${encodeURIComponent(download.id)}`,
       );
+      const session = await this.get(owner, id);
       const file = await this.files.import(
         owner,
-        download.name,
+        download.name || "download.pdf",
         new Uint8Array(await response.arrayBuffer()),
-        `Browser · ${id}`,
+        response.headers.get("content-type") || "application/pdf",
+        `Downloaded from ${session.url}`,
+        id,
+        `browser-download:${download.id}`,
       );
       await this.db.put(owner, "browser-downloads", { id: download.id, fileId: file.id });
       saved.push(file);

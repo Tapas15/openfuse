@@ -7,7 +7,17 @@ import {
   useRenderTool,
   useRenderToolCall,
 } from "@copilotkit/react-native/headless";
-import { ArrowDown, ArrowUp, FileText, RotateCcw, Square, X } from "lucide-react-native";
+import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from "expo-file-system/legacy";
+import {
+  ArrowDown,
+  ArrowUp,
+  FileText,
+  RotateCcw,
+  Square,
+  Upload,
+  X,
+} from "lucide-react-native";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   Keyboard,
@@ -228,10 +238,11 @@ export function ChatScreen({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
-  // Replayed messages show before connectAgent returns; new turns wait until it does.
   const [syncing, setSyncing] = useState(false);
   const [picking, setPicking] = useState(false);
   const [attachments, setAttachments] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
   const list = useRef<ScrollView>(null);
   const [queue] = useState(() => new ConversationQueue());
   const choiceCompletions = useRef(
@@ -321,6 +332,42 @@ export function ChatScreen({
     if (!richThreads) await api.request("/api/conversation", { messages: agent.messages }, "PUT");
     setSaveError("");
   }, [agent, api, richThreads]);
+  async function uploadFromChat() {
+    setUploadError("");
+    setUploading(true);
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "*/*",
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled) return;
+      const file = result.assets[0];
+      let artifact: any;
+      if (Platform.OS === "web") {
+        const form = new FormData();
+        if (!file.file) throw new Error("The selected file could not be read. Please choose it again.");
+        form.append("file", file.file, file.name);
+        artifact = await api.request("/api/files", form);
+      } else {
+        const res = await FileSystem.uploadAsync(api.url("/api/files"), file.uri, {
+          httpMethod: "POST",
+          uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+          fieldName: "file",
+          mimeType: file.mimeType || "application/octet-stream",
+          headers: { Authorization: `Bearer ${api.token}` },
+        });
+        const payload = JSON.parse(res.body);
+        if (res.status < 200 || res.status >= 300) throw new Error(payload.error || "Could not import this file.");
+        artifact = payload;
+      }
+      await refresh();
+      setAttachments((ids: string[]) => [...ids, artifact.id]);
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setUploading(false);
+    }
+  }
   /** Runs one turn; "held" means a queued message was refused by a lock and put back on hold. */
   const run = useCallback(
     async (message?: QueuedMessage): Promise<"held" | undefined> => {
@@ -827,7 +874,14 @@ export function ChatScreen({
         )}
         {picking && (
           <Card style={{ marginBottom: 12, padding: 15 }}>
-            <Text style={s.heading}>Add a document</Text>
+            <View style={[s.row, { justifyContent: "space-between", alignItems: "center", marginBottom: 6 }]}>
+              <Text style={s.heading}>Add a document</Text>
+              <Button small icon={Upload} busy={uploading} onPress={() => void uploadFromChat()}>
+                Import file
+              </Button>
+            </View>
+            <Text style={[s.muted, { marginBottom: 8 }]}>Pick existing files or import new ones (PDF, images, Word, PowerPoint, text). Max 10 MB.</Text>
+            {!!uploadError && <ErrorNotice error={uploadError} />}
             <ScrollView style={{ maxHeight: 230 }} keyboardShouldPersistTaps="handled">
               {w.files.length ? (
                 w.files.map((f) => (
@@ -845,7 +899,7 @@ export function ChatScreen({
                   />
                 ))
               ) : (
-                <Text style={s.muted}>Import a PDF in Files to use it in a conversation.</Text>
+                <Text style={s.muted}>No documents yet. Tap “Import file” above.</Text>
               )}
             </ScrollView>
             <Button

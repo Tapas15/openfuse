@@ -125,7 +125,7 @@ test("file operations recover a published PDF when metadata persistence fails", 
     return insert(...args);
   });
   await assert.rejects(
-    agent.files.import(owner, "sample.pdf", bytes, "fixture", undefined, "import-once"),
+    agent.files.import(owner, "sample.pdf", bytes, "application/pdf", "fixture", undefined, "import-once"),
     /metadata unavailable/,
   );
   assert.ok(publishedId);
@@ -135,6 +135,7 @@ test("file operations recover a published PDF when metadata persistence fails", 
     owner,
     "sample.pdf",
     bytes,
+    "application/pdf",
     "fixture",
     undefined,
     "import-once",
@@ -147,7 +148,7 @@ test("file operations recover a published PDF when metadata persistence fails", 
 test("file operation identity isolates owners, inputs and independent requests", async () => {
   const owner = "file-identities";
   const bytes = await createSamplePdf();
-  const source = await agent.files.import(owner, "sample.pdf", bytes, "fixture");
+  const source = await agent.files.import(owner, "sample.pdf", bytes, "application/pdf", "fixture");
   const fields = { participant_name: "Sample Student", permission_granted: true };
   const [first, concurrent] = await Promise.all([
     agent.files.fill(owner, source.id, fields, "task-fill"),
@@ -178,12 +179,14 @@ test("file operation identity isolates owners, inputs and independent requests",
     "other-file-owner",
     "sample.pdf",
     bytes,
+    "application/pdf",
     "fixture",
     undefined,
     "owner-scoped",
   );
   assert.notEqual(
-    (await agent.files.import(owner, "sample.pdf", bytes, "fixture", undefined, "owner-scoped")).id,
+    (await agent.files.import(owner, "sample.pdf", bytes, "application/pdf", "fixture", undefined, "owner-scoped"))
+      .id,
     otherOwner.id,
   );
 });
@@ -191,13 +194,14 @@ test("file operation identity isolates owners, inputs and independent requests",
 test("keyed file IDs are UUIDs that work through lookup, content reads and attachments", async () => {
   const owner = "local-user";
   const sample = await createSamplePdf();
-  const source = await agent.files.import(owner, "form.pdf", sample, "test");
+  const source = await agent.files.import(owner, "form.pdf", sample, "application/pdf", "test");
   const fields = { participant_name: "Sample Student", permission_granted: true };
   const filled = await agent.files.fill(owner, source.id, fields, "task-1:fill_pdf");
   const imported = await agent.files.import(
     owner,
     "a.pdf",
     sample,
+    "application/pdf",
     "test",
     undefined,
     "attachment:1",

@@ -159,7 +159,7 @@ export function computerTools(
       computerPathSchema,
       async ({ path }) => {
         const { name, bytes } = await computer.pdfBytes(owner, path);
-        return files.import(owner, name, bytes, `Computer: ${path}`);
+        return files.import(owner, name, bytes, "application/pdf", `Computer: ${path}`);
       },
     ),
   ];

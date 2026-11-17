@@ -82,7 +82,7 @@ test("file lookups reject malformed IDs instead of probing storage", async (t) =
     await assert.rejects(files.bytes("owner", id), { message: /File not found/ });
   }
   const sample = await createSamplePdf();
-  const imported = await files.import("owner", "///", sample, "test");
+  const imported = await files.import("owner", "///", sample, "application/pdf", "test");
   assert.equal(imported.name, "document.pdf");
   const roundTrip = await files.bytes("owner", imported.id);
   assert.equal(Buffer.from(roundTrip).subarray(0, 5).toString(), "%PDF-");

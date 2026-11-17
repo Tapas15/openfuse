@@ -170,9 +170,10 @@ export class WorkspaceService {
     if (await this.db.get(owner, "settings", "seeded")) return;
     const file = await this.files.import(
       owner,
-      "Field trip permission slip.pdf",
+      "permission-form.pdf",
       await createSamplePdf(),
-      "Gmail · Lincoln Middle School",
+      "application/pdf",
+      "Sample form",
     );
     const now = new Date();
     const at = (h: number, m = 0) => {
@@ -499,7 +500,8 @@ export class WorkspaceService {
       owner,
       decodeURIComponent(filename),
       await this.google(owner, connection.id).getAttachment(messageId, attachmentId),
-      `Gmail · ${message.subject}`,
+      "application/octet-stream",
+      `Gmail Â· ${message.subject}`,
       undefined,
       JSON.stringify(["attachment", connection.id, reference]),
     );

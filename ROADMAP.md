@@ -30,3 +30,11 @@ The release is a personal-agent alpha: delegate a job, inspect its plan, supply 
 - [ ] Multi-user authentication, deployment hardening, retention/export controls, and operational recovery.
 
 Each item needs its own authentication, capability boundaries, failure behavior, and end-to-end evidence before it becomes a supported feature. No dates or third-party API access are promised.
+
+
+
+
+
+
+
+docker run -d --name openmuse-dev-db -e POSTGRES_USER=openmuse -e POSTGRES_PASSWORD=openmuse -e POSTGRES_DB=openfuse -p 127.0.0.1:54329:5432 postgres:16
