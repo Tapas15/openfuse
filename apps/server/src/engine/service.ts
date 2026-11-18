@@ -131,6 +131,9 @@ export class AgentService {
       id: "identity",
       name: "OpenFuse",
       tone: "warm",
+      avatar: "sky",
+      pov: "",
+      showChatUpdates: true,
     });
   }
   async snapshot(owner: string): Promise<AgentWorkspace> {
@@ -155,7 +158,13 @@ export class AgentService {
       memories,
       artifacts,
       notifications,
-      identity: identity ?? { name: "OpenFuse", tone: "warm" },
+      identity: {
+        name: identity?.name ?? "OpenFuse",
+        tone: identity?.tone ?? "warm",
+        avatar: identity?.avatar ?? "sky",
+        pov: identity?.pov ?? "",
+        showChatUpdates: identity?.showChatUpdates !== false,
+      },
       worker: {
         running:
           this.worker.running ||

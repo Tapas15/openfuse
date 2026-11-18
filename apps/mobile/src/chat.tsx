@@ -14,6 +14,7 @@ import {
   ArrowUp,
   FileText,
   RotateCcw,
+  Settings2,
   Square,
   Upload,
   X,
@@ -222,7 +223,7 @@ export function ChatScreen({
   thread?: Selection;
   active?: boolean;
 }) {
-  const { api, workspace: w, refresh, navigate } = useWorkspace();
+  const { api, workspace: w, refresh, navigate, open } = useWorkspace();
   const { data: agentWorkspace, refresh: refreshAgent } = useAgentWorkspace();
   const { enabled: richThreads, mainId, claimPrompt } = useFuseThread();
   const selection = thread || { id: "local", existing: false };
@@ -977,6 +978,21 @@ export function ChatScreen({
               <Text style={{ color: colors.text, fontSize: 29, fontWeight: "300", lineHeight: 32 }}>
                 +
               </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Agent settings, name, image and memory"
+              onPress={() => open({ type: "agent-settings" })}
+              style={({ pressed }) => ({
+                width: 44,
+                height: 44,
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 24,
+                backgroundColor: pressed ? colors.sky : "transparent",
+              })}
+            >
+              <Settings2 size={22} color={colors.text} strokeWidth={1.8} />
             </Pressable>
             <TextInput
               accessibilityLabel="Message OpenFuse"

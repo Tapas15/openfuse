@@ -52,11 +52,13 @@ export interface Artifact {
   name: string;
   mimeType: string;
   size: number;
-  pageCount: number;
+  pageCount?: number;
   url: string;
   createdAt: string;
   source: string;
   parentId?: string;
+  width?: number;
+  height?: number;
   fields?: { name: string; value: string; type: "text" | "checkbox" | "unsupported" }[];
 }
 export interface BrowserSession {

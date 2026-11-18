@@ -399,21 +399,22 @@ export function LinkRow({
     </Pressable>
   );
 }
-/** OpenFuse's original capybara, shared by every assistant surface. */
+/** OpenFuse's original capybara or a custom agent image. */
 export function Mascot({
   size = 42,
   variant = "sky",
 }: {
   size?: number;
-  variant?: "sky" | "sand" | "lilac";
+  variant?: string;
 }) {
+  const preset = variant === "sky" || variant === "sand" || variant === "lilac" ? variant : null;
   const palette = {
     sky: "#ECF5FA",
     sand: "#FAF0DF",
     lilac: "#F1ECF9",
-  }[variant];
+  }[preset || "sky"];
   return (
-    <View accessibilityLabel="OpenFuse capybara" style={{ width: size, height: size }}>
+    <View accessibilityLabel="Agent avatar" style={{ width: size, height: size }}>
       <View
         style={{
           position: "absolute",
@@ -426,9 +427,14 @@ export function Mascot({
         }}
       />
       <Image
-        source={require("../assets/capybara.png")}
-        resizeMode="contain"
-        style={{ width: size, height: size }}
+        source={preset ? require("../assets/capybara.png") : { uri: variant || undefined }}
+        resizeMode={preset ? "contain" : "cover"}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: preset ? 0 : size / 2,
+          overflow: "hidden",
+        }}
         accessible={false}
       />
     </View>

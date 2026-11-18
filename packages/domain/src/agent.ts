@@ -118,7 +118,10 @@ export interface AgentNotification {
 export interface AgentIdentity {
   name: string;
   tone: "warm" | "concise" | "thoughtful";
-  avatar?: "sky" | "sand" | "lilac";
+  /** Preset mascot variant or a custom image URI/data URL. */
+  avatar?: string;
+  /** Point of view / personality context applied across chats. */
+  pov?: string;
   showChatUpdates?: boolean;
 }
 export interface AgentWorkspace {

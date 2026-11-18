@@ -22,6 +22,25 @@ def pnpm_cmd(*args):
     return [pnpm, *args]
 
 
+def ensure_pnpm():
+    """Ensure pnpm is available; try to enable/install via corepack if missing."""
+    if shutil.which("pnpm") or shutil.which("pnpm.cmd"):
+        return
+    corepack = shutil.which("corepack") or shutil.which("corepack.cmd")
+    if corepack:
+        print("+ enabling pnpm via corepack", flush=True)
+        try:
+            subprocess.run([corepack, "enable"], cwd=ROOT, check=True, shell=(os.name == "nt"))
+        except Exception:
+            pass
+        try:
+            subprocess.run([corepack, "prepare", "pnpm@latest", "--activate"], cwd=ROOT, check=True, shell=(os.name == "nt"))
+        except Exception:
+            pass
+    if not shutil.which("pnpm") and not shutil.which("pnpm.cmd"):
+        raise SystemExit("pnpm is not installed. Install Node.js + pnpm (https://pnpm.io/installation), e.g. `corepack enable` then `corepack prepare pnpm@latest --activate`, or `npm i -g pnpm`.")
+
+
 def base_env():
     env = os.environ.copy()
     # Let .env drive model/computer settings; stale shell env would override .env in server config.
@@ -245,6 +264,7 @@ def main():
         ok = check_database()
         sys.exit(0 if ok else 1)
 
+    ensure_pnpm()
     check_database()
 
     # Stop any previously running dev servers so ports are free.

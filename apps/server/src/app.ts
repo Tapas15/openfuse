@@ -24,6 +24,7 @@ import { AgentService } from "./engine/service.ts";
 import { AppError } from "./errors.ts";
 import { Files } from "./files.ts";
 import { GoogleAuth } from "./google-auth.ts";
+import { Images } from "./images.ts";
 import { rateLimit } from "./rate-limit.ts";
 import { WorkspaceService } from "./workspace.ts";
 
@@ -36,6 +37,7 @@ export async function createApp(
   await resolveComputerDeployment(config);
   const auth = await createAuth(db, config),
     files = new Files(db, config, auth),
+    images = new Images(db, config, auth),
     google = new GoogleAuth(db, config),
     workspace = new WorkspaceService(db, config, files, google);
   const actions = new ActionService(db, {
@@ -261,6 +263,25 @@ export async function createApp(
       ),
       201,
     );
+  });
+  app.post("/api/images", async (c) => {
+    const data = await c.req.parseBody();
+    const file = data.file;
+    if (!(file instanceof File)) throw new AppError("Choose an image file");
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const image = await images.import(c.get("owner"), file.name, bytes, "Uploaded by you");
+    return c.json(image, 201);
+  });
+  app.get("/api/images/:id/content", async (c) => {
+    const image = await images.get(c.get("owner"), c.req.param("id"));
+    c.header("Content-Type", "image/png");
+    c.header("Content-Disposition", `inline; filename*=UTF-8''${encodeURIComponent(image.name)}`);
+    return c.body(await images.bytes(c.get("owner"), image.id));
+  });
+  app.post("/api/images/from-url", async (c) => {
+    const body = z.object({ url: z.url().max(4096) }).parse(await c.req.json());
+    const image = await images.importFromUrl(c.get("owner"), body.url, "Imported from URL");
+    return c.json(image, 201);
   });
   app.get("/api/files/:id/content", async (c) => {
     const file = await files.get(c.get("owner"), c.req.param("id"));
